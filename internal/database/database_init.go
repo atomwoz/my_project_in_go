@@ -29,10 +29,8 @@ func LoadConfig(conf_location string) {
 }
 
 func setupDB(dbname string) {
-	// Ensure config is loaded before using it
 
 	// Construct DSN from Viper settings
-
 	var timezone string
 
 	if viper.GetString("db.timezone") == "" {
