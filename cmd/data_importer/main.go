@@ -1,227 +1,122 @@
-// main.go
 package main
 
 import (
-	"context"
 	"encoding/csv"
-	"fmt"
-	"io"
+	"flag"
 	"log"
 	"os"
 	"strings"
-	"time"
 
-	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
+	"atomwoz.com/remitly_task/internal/database"
 	"github.com/spf13/viper"
-	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
-// Config holds application configuration
-type Config struct {
-	DB struct {
-		Host     string
-		Port     int
-		User     string
-		Password string
-		DbName   string
-		SSLMode  string
-	}
-	BatchSize int
+// SwiftCode represents a bank's headquarters or branch.
+type SwiftCode struct {
+	SwiftCode   string `gorm:"primaryKey"`
+	BankName    string
+	CountryCode string
+	CountryName string
+	City        string
+	Address     string
+	TimeZone    string
+	Headquarter string // Stores HQ SwiftCode if it's a branch
 }
 
-// Bank represents a bank record
-type Bank struct {
-	ID          int64     `db:"id"`
-	SwiftCode   string    `db:"swift_code"`
-	CountryCode string    `db:"country_code"`
-	CountryName string    `db:"country_name"`
-	BankName    string    `db:"bank_name"`
-	Address     string    `db:"address"`
-	City        string    `db:"city"`
-	TimeZone    string    `db:"time_zone"`
-	CreatedAt   time.Time `db:"created_at"`
-}
-
-// BankService handles bank-related operations
-type BankService struct {
-	db     *sqlx.DB
-	logger *zap.Logger
-	config *Config
-}
-
-// NewBankService creates a new BankService
-func NewBankService(db *sqlx.DB, logger *zap.Logger, config *Config) *BankService {
-	return &BankService{
-		db:     db,
-		logger: logger,
-		config: config,
-	}
-}
-
-// ProcessCSVFile processes the SWIFT codes CSV file
-func (s *BankService) ProcessCSVFile(ctx context.Context, filename string) error {
-	file, err := os.Open(filename)
+// ImportSwiftCodes reads a CSV file and imports Swift codes into the database.
+func ImportSwiftCodes(db *gorm.DB, filePath string) {
+	file, err := os.Open(filePath)
 	if err != nil {
-		return fmt.Errorf("failed to open file: %w", err)
+		log.Fatalf("Failed to open file: %v", err)
 	}
 	defer file.Close()
 
 	reader := csv.NewReader(file)
-
-	// Skip header
-	_, err = reader.Read()
+	records, err := reader.ReadAll()
 	if err != nil {
-		return fmt.Errorf("failed to read header: %w", err)
+		log.Fatalf("Failed to read CSV: %v", err)
 	}
 
-	// Begin transaction
-	tx, err := s.db.BeginTxx(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
-	}
-	defer tx.Rollback()
+	swiftMap := make(map[string]string) // Stores HQ Swift codes
 
-	// Prepare insert statement
-	stmt, err := tx.PreparexContext(ctx, `
-        INSERT INTO banks (
-            swift_code, country_code, country_name, bank_name, 
-            address, city, time_zone, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        ON CONFLICT (swift_code) DO UPDATE SET
-            country_code = EXCLUDED.country_code,
-            country_name = EXCLUDED.country_name,
-            bank_name = EXCLUDED.bank_name,
-            address = EXCLUDED.address,
-            city = EXCLUDED.city,
-            time_zone = EXCLUDED.time_zone,
-            created_at = EXCLUDED.created_at
-    `)
-	if err != nil {
-		return fmt.Errorf("failed to prepare statement: %w", err)
-	}
-	defer stmt.Close()
-
-	var records int
-	for {
-		record, err := reader.Read()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return fmt.Errorf("failed to read record: %w", err)
+	// Iterate over records and store valid Swift codes
+	var swiftCodes []SwiftCode
+	for _, row := range records {
+		if len(row) < 8 {
+			continue // Skip invalid rows
 		}
 
-		// Process record
-		_, err = stmt.ExecContext(ctx,
-			strings.TrimSpace(record[1]),                  // swift_code
-			strings.ToUpper(strings.TrimSpace(record[0])), // country_code
-			strings.ToUpper(strings.TrimSpace(record[6])), // country_name
-			strings.TrimSpace(record[3]),                  // bank_name
-			strings.TrimSpace(record[4]),                  // address
-			strings.TrimSpace(record[5]),                  // city
-			strings.TrimSpace(record[7]),                  // time_zone
-			time.Now().UTC(),
-		)
-		if err != nil {
-			return fmt.Errorf("failed to insert record: %w", err)
+		countryCode := strings.ToUpper(strings.TrimSpace(row[0]))
+		swift := strings.TrimSpace(row[1])
+		bank := strings.TrimSpace(row[3])
+		address := strings.TrimSpace(row[4])
+		city := strings.TrimSpace(row[5])
+		countryName := strings.ToUpper(strings.TrimSpace(row[6]))
+		timeZone := strings.TrimSpace(row[7])
+
+		// Identify headquarters and branches
+		hqSwift := swift
+		if !strings.HasSuffix(swift, "XXX") {
+			hqSwift = swift[:8] + "XXX" // Derive HQ Swift from first 8 characters
 		}
+		swiftMap[swift[:8]] = hqSwift
 
-		records++
-		if records%1000 == 0 {
-			s.logger.Info("Processing records", zap.Int("count", records))
+		swiftCodes = append(swiftCodes, SwiftCode{
+			SwiftCode:   swift,
+			BankName:    bank,
+			CountryCode: countryCode,
+			CountryName: countryName,
+			City:        city,
+			Address:     address,
+			TimeZone:    timeZone,
+			Headquarter: hqSwift, // Store HQ reference
+		})
+	}
+
+	// Check if the database exists, if not create it
+	dbName := viper.GetString("db.dbname")
+	var exists int
+	checkQuery := "SELECT 1 FROM pg_database WHERE datname = ?"
+	if err := db.Raw(checkQuery, dbName).Scan(&exists).Error; err != nil {
+		log.Fatalf("Failed to check database existence: %v", err)
+	}
+
+	if exists != 1 {
+		// Build the CREATE DATABASE query string (placeholders can't be used here)
+		createQuery := "CREATE DATABASE " + dbName
+		if err := db.Exec(createQuery).Error; err != nil {
+			log.Fatalf("Failed to create database: %v", err)
 		}
+		log.Printf("Database %s created successfully!", dbName)
+	} else {
+		log.Printf("Database %s already exists.", dbName)
 	}
 
-	// Commit transaction
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("failed to commit transaction: %w", err)
+	// Migrate the database
+	if err := db.AutoMigrate(&SwiftCode{}); err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
 	}
 
-	s.logger.Info("Completed processing", zap.Int("total_records", records))
-	return nil
-}
-
-func loadConfig() (*Config, error) {
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath("../config")
-
-	var config Config
-	if err := viper.ReadInConfig(); err != nil {
-		return nil, fmt.Errorf("failed to read config: %w", err)
+	// Create a table for Swift codes
+	if err := db.Exec("TRUNCATE TABLE swift_codes").Error; err != nil {
+		log.Fatalf("Failed to truncate table: %v", err)
 	}
 
-	if err := viper.Unmarshal(&config); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+	// Push data to the database
+	if err := db.Create(&swiftCodes).Error; err != nil {
+		log.Fatalf("Failed to insert Swift codes: %v", err)
 	}
 
-	return &config, nil
-}
-
-func initDB(config *Config) (*sqlx.DB, error) {
-	dsn := fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
-		config.DB.Host, config.DB.Port, config.DB.User,
-		config.DB.Password, config.DB.DbName, config.DB.SSLMode,
-	)
-
-	db, err := sqlx.Connect("postgres", dsn)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to database: %w", err)
-	}
-
-	// Initialize schema
-	_, err = db.Exec(`
-        CREATE TABLE IF NOT EXISTS banks (
-            id SERIAL PRIMARY KEY,
-            swift_code VARCHAR(11) UNIQUE NOT NULL,
-            country_code VARCHAR(2) NOT NULL,
-            country_name VARCHAR(100) NOT NULL,
-            bank_name VARCHAR(200) NOT NULL,
-            address VARCHAR(500) NOT NULL,
-            city VARCHAR(100) NOT NULL,
-            time_zone VARCHAR(50) NOT NULL,
-            created_at TIMESTAMP WITH TIME ZONE NOT NULL,
-            CONSTRAINT swift_code_uppercase CHECK (swift_code = UPPER(swift_code)),
-            CONSTRAINT country_code_uppercase CHECK (country_code = UPPER(country_code))
-        );
-        CREATE INDEX IF NOT EXISTS idx_banks_country_code ON banks(country_code);
-    `)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize schema: %w", err)
-	}
-
-	return db, nil
+	log.Println("Swift codes imported successfully!")
 }
 
 func main() {
-	// Initialize logger
-	logger, err := zap.NewProduction()
-	if err != nil {
-		log.Fatalf("Failed to initialize logger: %v", err)
-	}
-	defer logger.Sync()
 
-	// Load configuration
-	config, err := loadConfig()
-	if err != nil {
-		logger.Fatal("Failed to load configuration", zap.Error(err))
-	}
+	filePath := flag.String("file", "data/swift_codes.csv", "Path to the CSV file")
+	flag.Parse()
 
-	// Initialize database
-	db, err := initDB(config)
-	if err != nil {
-		logger.Fatal("Failed to initialize database", zap.Error(err))
-	}
-	defer db.Close()
+	database.SetupDatabase()
 
-	// Create service
-	service := NewBankService(db, logger, config)
-
-	// Process file
-	ctx := context.Background()
-	if err := service.ProcessCSVFile(ctx, "data/swift_codes.csv"); err != nil {
-		logger.Fatal("Failed to process CSV file", zap.Error(err))
-	}
+	ImportSwiftCodes(database.DB, *filePath)
 }

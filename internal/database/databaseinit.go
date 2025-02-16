@@ -25,7 +25,7 @@ func LoadConfig() {
 		log.Fatalf("Error reading config file: %v", err)
 	}
 
-	fmt.Println("Config loaded successfully!")
+	log.Println("Config loaded successfully!")
 }
 
 // SetupDatabase initializes the database connection
@@ -59,5 +59,5 @@ func SetupDatabase() {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	fmt.Println("Connected to database successfully")
+	log.Println("Connected to database successfully")
 }
