@@ -1,8 +1,8 @@
 package main
 
 import (
-	"atomwoz.com/remitly_task/src/database"
-	"atomwoz.com/remitly_task/src/router"
+	"atomwoz.com/remitly_task/internal/database"
+	"atomwoz.com/remitly_task/internal/router"
 )
 
 func main() {

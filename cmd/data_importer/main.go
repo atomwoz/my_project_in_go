@@ -221,7 +221,7 @@ func main() {
 
 	// Process file
 	ctx := context.Background()
-	if err := service.ProcessCSVFile(ctx, "swift_codes.csv"); err != nil {
+	if err := service.ProcessCSVFile(ctx, "data/swift_codes.csv"); err != nil {
 		logger.Fatal("Failed to process CSV file", zap.Error(err))
 	}
 }

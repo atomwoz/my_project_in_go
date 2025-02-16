@@ -1,7 +1,7 @@
 package router
 
 import (
-	"atomwoz.com/remitly_task/src/controller"
+	"atomwoz.com/remitly_task/internal/controller"
 	"github.com/gin-gonic/gin"
 )
 
