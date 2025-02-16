@@ -35,7 +35,7 @@ func SwiftCode(c *gin.Context) {
 	// Query the database for branches
 	if bank.IsHeadquarters {
 		var branches []models.SwiftBranchRow
-		err := database.DB.Table(TABLE_NAME).Where("bank_symbol = ? AND is_headquarters = ?", bank.BankSymbol, false).Find(&branches).Error
+		err := database.DB.Table(TABLE_NAME).Where("bank_symbol = ? AND swift_code <> ?", bank.BankSymbol, bank.SwiftCode).Find(&branches).Error
 		if err != nil {
 			routerutils.FailDatabase(c, err, 2)
 		}
