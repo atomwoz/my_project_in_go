@@ -4,7 +4,8 @@ db:
   port: 5432
   user: postgres
   password: zaq1@WSX
-  name: swiftdb
+  dbname: swiftdb
+  table: banks
   sslmode: disable
 
 batchSize: 1000

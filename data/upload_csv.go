@@ -24,7 +24,7 @@ type Config struct {
 		Port     int
 		User     string
 		Password string
-		Name     string
+		DbName   string
 		SSLMode  string
 	}
 	BatchSize int
@@ -163,7 +163,7 @@ func initDB(config *Config) (*sqlx.DB, error) {
 	dsn := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
 		config.DB.Host, config.DB.Port, config.DB.User,
-		config.DB.Password, config.DB.Name, config.DB.SSLMode,
+		config.DB.Password, config.DB.DbName, config.DB.SSLMode,
 	)
 
 	db, err := sqlx.Connect("postgres", dsn)
