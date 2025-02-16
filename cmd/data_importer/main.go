@@ -8,21 +8,10 @@ import (
 	"strings"
 
 	"atomwoz.com/remitly_task/internal/database"
+	"atomwoz.com/remitly_task/internal/database/models"
 	"github.com/spf13/viper"
 	"gorm.io/gorm"
 )
-
-// SwiftCode represents a bank's headquarters or branch.
-type SwiftCode struct {
-	SwiftCode   string `gorm:"primaryKey"`
-	BankName    string
-	CountryCode string
-	CountryName string
-	City        string
-	Address     string
-	TimeZone    string
-	Headquarter string // Stores HQ SwiftCode if it's a branch
-}
 
 // ImportSwiftCodes reads a CSV file and imports Swift codes into the database.
 func ImportSwiftCodes(db *gorm.DB, filePath string) {
@@ -38,10 +27,8 @@ func ImportSwiftCodes(db *gorm.DB, filePath string) {
 		log.Fatalf("Failed to read CSV: %v", err)
 	}
 
-	swiftMap := make(map[string]string) // Stores HQ Swift codes
-
-	// Iterate over records and store valid Swift codes
-	var swiftCodes []SwiftCode
+	// Iterate over records and create model from each csv row
+	var swiftCodes []models.SwiftModel
 	for _, row := range records {
 		if len(row) < 8 {
 			continue // Skip invalid rows
@@ -55,22 +42,19 @@ func ImportSwiftCodes(db *gorm.DB, filePath string) {
 		countryName := strings.ToUpper(strings.TrimSpace(row[6]))
 		timeZone := strings.TrimSpace(row[7])
 
-		// Identify headquarters and branches
-		hqSwift := swift
-		if !strings.HasSuffix(swift, "XXX") {
-			hqSwift = swift[:8] + "XXX" // Derive HQ Swift from first 8 characters
-		}
-		swiftMap[swift[:8]] = hqSwift
+		symbol := swift[:8]
+		isHQ := strings.HasSuffix(swift, "XXX")
 
-		swiftCodes = append(swiftCodes, SwiftCode{
-			SwiftCode:   swift,
-			BankName:    bank,
-			CountryCode: countryCode,
-			CountryName: countryName,
-			City:        city,
-			Address:     address,
-			TimeZone:    timeZone,
-			Headquarter: hqSwift, // Store HQ reference
+		swiftCodes = append(swiftCodes, models.SwiftModel{
+			SwiftCode:      swift,
+			BankName:       bank,
+			CountryCode:    countryCode,
+			CountryName:    countryName,
+			City:           city,
+			Address:        address,
+			TimeZone:       timeZone,
+			IsHeadquarters: isHQ,
+			BankSymbol:     symbol,
 		})
 	}
 
@@ -82,8 +66,8 @@ func ImportSwiftCodes(db *gorm.DB, filePath string) {
 		log.Fatalf("Failed to check database existence: %v", err)
 	}
 
+	// Create the database if it doesn't exist
 	if exists != 1 {
-		// Build the CREATE DATABASE query string (placeholders can't be used here)
 		createQuery := "CREATE DATABASE " + dbName
 		if err := db.Exec(createQuery).Error; err != nil {
 			log.Fatalf("Failed to create database: %v", err)
@@ -94,12 +78,12 @@ func ImportSwiftCodes(db *gorm.DB, filePath string) {
 	}
 
 	// Migrate the database
-	if err := db.AutoMigrate(&SwiftCode{}); err != nil {
+	if err := db.AutoMigrate(&models.SwiftModel{}); err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
 
 	// Create a table for Swift codes
-	if err := db.Exec("TRUNCATE TABLE swift_codes").Error; err != nil {
+	if err := db.Exec("TRUNCATE TABLE " + viper.GetString("db.table")).Error; err != nil {
 		log.Fatalf("Failed to truncate table: %v", err)
 	}
 

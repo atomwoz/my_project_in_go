@@ -9,3 +9,4 @@ db:
   sslmode: disable
 
 batchSize: 1000
+debug: True

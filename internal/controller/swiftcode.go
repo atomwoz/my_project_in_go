@@ -5,33 +5,60 @@ import (
 
 	"atomwoz.com/remitly_task/internal/database"
 	"atomwoz.com/remitly_task/internal/database/models"
+	"atomwoz.com/remitly_task/internal/router/routerutils"
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 	"gorm.io/gorm"
 )
 
 // SwiftCode retrieves bank details based on the SWIFT code
 func SwiftCode(c *gin.Context) {
-	var bank models.SwiftRow
+	var bank models.SwiftModel
+	TABLE_NAME := viper.GetString("db.table")
 
 	// Query the database
-	err := database.DB.Table("banks").
-		Select("*").
+	err := database.DB.Table(TABLE_NAME).
 		Where("swift_code = ?", c.Param("code")).
 		Take(&bank).Error
-
-	// Handle database errors
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Swift code not found",
+				"error_msg": "Swift code not found", "error": 1,
 			})
 			return
 		}
-		// Handle other database errors
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error", "details": err.Error()})
+		routerutils.FailDatabase(c, err, 2)
 		return
 	}
 
-	// Return the JSON response
-	c.IndentedJSON(http.StatusOK, bank)
+	//Branching !!!
+	// Query the database for branches
+	if bank.IsHeadquarters {
+		var branches []models.SwiftBranchRow
+		err := database.DB.Table(TABLE_NAME).Where("bank_symbol = ? AND is_headquarters = ?", bank.BankSymbol, false).Find(&branches).Error
+		if err != nil {
+			routerutils.FailDatabase(c, err, 2)
+		}
+		headquarter := models.SwiftHeadquarterRow{
+			Address:       bank.Address,
+			BankName:      bank.BankName,
+			CountryCode:   bank.CountryCode,
+			CountryName:   bank.CountryName,
+			IsHeadquarter: true,
+			SwiftCode:     bank.SwiftCode,
+			Branches:      branches,
+		}
+		routerutils.Ok(c, headquarter)
+		return
+
+	}
+	branch := models.SwiftBranchRow{
+		Address:       bank.Address,
+		BankName:      bank.BankName,
+		CountryCode:   bank.CountryCode,
+		CountryName:   bank.CountryName,
+		IsHeadquarter: false,
+		SwiftCode:     bank.SwiftCode,
+	}
+	routerutils.Ok(c, branch)
 }
