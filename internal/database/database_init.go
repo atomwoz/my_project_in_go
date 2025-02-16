@@ -12,10 +12,10 @@ import (
 var DB *gorm.DB
 
 // LoadConfig initializes Viper and loads configuration from config.yaml
-func LoadConfig() {
-	viper.SetConfigName("config") // Config file name without extension
-	viper.SetConfigType("yaml")   // Config type
-	viper.AddConfigPath("config") // Path to look for config file
+func LoadConfig(conf_location string) {
+	viper.SetConfigName("config")      // Config file name without extension
+	viper.SetConfigType("yaml")        // Config type
+	viper.AddConfigPath(conf_location) // Path to look for config file
 
 	// Read in environment variables as overrides
 	viper.AutomaticEnv()
@@ -28,9 +28,8 @@ func LoadConfig() {
 	log.Println("Config loaded successfully!")
 }
 
-// SetupDatabase initializes the database connection
-func SetupDatabase() {
-	LoadConfig() // Ensure config is loaded before using it
+func setupDB(dbname string) {
+	// Ensure config is loaded before using it
 
 	// Construct DSN from Viper settings
 
@@ -47,7 +46,7 @@ func SetupDatabase() {
 		viper.GetString("db.host"),
 		viper.GetString("db.user"),
 		viper.GetString("db.password"),
-		viper.GetString("db.dbname"),
+		dbname,
 		viper.GetInt("db.port"),
 		viper.GetString("db.sslmode"),
 		timezone,
@@ -60,4 +59,15 @@ func SetupDatabase() {
 	}
 
 	log.Println("Connected to database successfully")
+}
+
+// SetupDatabase initializes the database connection
+func SetupDatabase() {
+	LoadConfig("config")
+	setupDB(viper.GetString("db.dbname"))
+}
+
+func SetupTestDatabase(location string) {
+	LoadConfig(location)
+	setupDB(viper.GetString("db.testdb"))
 }

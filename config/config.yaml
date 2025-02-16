@@ -5,6 +5,7 @@ db:
   user: postgres
   password: zaq1@WSX
   dbname: swiftdb
+  testdb: swiftdb
   table: banks
   sslmode: disable
 

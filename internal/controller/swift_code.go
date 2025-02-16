@@ -5,7 +5,7 @@ import (
 
 	"atomwoz.com/remitly_task/internal/database"
 	"atomwoz.com/remitly_task/internal/database/models"
-	"atomwoz.com/remitly_task/internal/router/routerutils"
+	routerutils "atomwoz.com/remitly_task/internal/router/router_utils"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 	"gorm.io/gorm"
