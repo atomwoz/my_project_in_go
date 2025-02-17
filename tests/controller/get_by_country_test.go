@@ -23,7 +23,7 @@ func TestGetByCountryCode(t *testing.T) {
 	assert.Equal(t, `{
     "countryISO2": "AW",
     "countryName": "ARUBA",
-    "Branches": [
+    "branches": [
         {
             "bankName": "AIB BANK NV",
             "address": "WILHELMINASTRAAT 36  - ORANJESTAD ORANJESTAD-WEST AND ORANJESTAD-EAST",

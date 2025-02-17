@@ -40,7 +40,7 @@ func GetByCountry(c *gin.Context) {
 
 	// Handle any other database error
 	if err != nil {
-		routerutils.FailDatabase(c, err, 2)
+		routerutils.FailDatabase(c, err, ERRORS.ErrCodeInternalDatabase)
 		return
 	}
 
