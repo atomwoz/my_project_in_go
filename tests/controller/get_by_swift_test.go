@@ -1,4 +1,4 @@
-package tests
+package controller_tests
 
 import (
 	"net/http"
@@ -14,7 +14,7 @@ import (
 var router = rtr.CreateRouter("/v1")
 
 func TestGetBySwiftCodeBranch(t *testing.T) {
-	database.SetupTestDatabase("../../../config")
+	database.SetupTestDatabase()
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/swift-codes/ALBPPLP1BMW", nil)
 	router.ServeHTTP(w, req)
@@ -30,7 +30,7 @@ func TestGetBySwiftCodeBranch(t *testing.T) {
 }`, w.Body.String())
 }
 func TestGetBySwiftHQ(t *testing.T) {
-	database.SetupTestDatabase("../../../config")
+	database.SetupTestDatabase()
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/swift-codes/BKSACLRMXXX", nil)
 	router.ServeHTTP(w, req)
@@ -81,7 +81,7 @@ func TestGetBySwiftHQ(t *testing.T) {
 }
 
 func TestGetNoSwift(t *testing.T) {
-	database.SetupTestDatabase("../../../config")
+	database.SetupTestDatabase()
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/swift-codes", nil)
 	router.ServeHTTP(w, req)
@@ -91,7 +91,7 @@ func TestGetNoSwift(t *testing.T) {
 }
 
 func TestWrongSwift(t *testing.T) {
-	database.SetupTestDatabase("../../../config")
+	database.SetupTestDatabase()
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/swift-codes/ALA_MA_KOTA", nil)
 	router.ServeHTTP(w, req)

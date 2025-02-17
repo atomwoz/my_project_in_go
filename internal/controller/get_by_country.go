@@ -11,37 +11,45 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetByCountry(c *gin.Context) {
-	var rows []models.SwiftBranchRow
-	TABLE_NAME := viper.GetString("db.table")
+// CountryBranchesResponse is a response structure for the GetByCountry controller.
+type CountryBranchesResponse struct {
+	CountryISO2 string                  `json:"countryISO2"`
+	CountryName string                  `json:"countryName"`
+	Branches    []models.SwiftBranchRow `json:"branches"`
+}
 
-	// Query the database
-	err := database.DB.Table(TABLE_NAME).
-		Where("country_code = ?", c.Param("country_code")).
+// GetByCountry retrieves all branches in a country based on the country code.
+func GetByCountry(c *gin.Context) {
+	countryCode := c.Param("country_code")
+	tableName := viper.GetString("db.table")
+	var rows []models.SwiftBranchRow
+
+	// SQL query
+	err := database.DB.Table(tableName).
+		Where("country_code = ?", countryCode).
 		Find(&rows).Error
 
+	// Error handling
 	if err == gorm.ErrRecordNotFound || len(rows) == 0 {
 		c.JSON(http.StatusNotFound, gin.H{
-			"error_msg": "Country ISO2 code '" + c.Param("country_code") + "' not found", "error": ERRORS.ErrCodeCountryCodeNotFound,
+			"error_msg": "Country ISO2 code '" + countryCode + "' not found",
+			"error":     ERRORS.ErrCodeCountryCodeNotFound,
 		})
 		return
 	}
 
+	// Handle any other database error
 	if err != nil {
 		routerutils.FailDatabase(c, err, 2)
 		return
 	}
 
-	var rowsWithCountryName struct {
-		CountryISO2 string `json:"countryISO2"`
-		CountryName string `json:"countryName"`
-		Branches    []models.SwiftBranchRow
-	}
-	{
-		rowsWithCountryName.CountryISO2 = c.Param("country_code")
-		rowsWithCountryName.CountryName = rows[0].CountryName
-		rowsWithCountryName.Branches = rows
+	// Creating final response
+	response := CountryBranchesResponse{
+		CountryISO2: countryCode,
+		CountryName: rows[0].CountryName,
+		Branches:    rows,
 	}
 
-	routerutils.Ok(c, rowsWithCountryName)
+	routerutils.Ok(c, response)
 }

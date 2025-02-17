@@ -1,29 +1,34 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
+
+	"errors"
 
 	"atomwoz.com/remitly_task/internal/database"
 	"atomwoz.com/remitly_task/internal/database/models"
 	routerutils "atomwoz.com/remitly_task/internal/router/router_utils"
+
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 	"gorm.io/gorm"
 )
 
-// SwiftCode retrieves bank details based on the SWIFT code
+// SwiftCode retrieves bank details based on the SWIFT code.
 func SwiftCode(c *gin.Context) {
+	tableName := viper.GetString("db.table")
+	code := c.Param("code")
 	var bank models.SwiftModel
-	TABLE_NAME := viper.GetString("db.table")
 
-	// Query the database
-	err := database.DB.Table(TABLE_NAME).
-		Where("swift_code = ?", c.Param("code")).
-		Take(&bank).Error
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+	//SQL query
+	if err := database.DB.Table(tableName).
+		Where("swift_code = ?", code).
+		Take(&bank).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{
-				"error_msg": "Swift code '" + c.Param("code") + "' not found", "error": ERRORS.ErrCodeSwiftRecordNotFound,
+				"error_msg": fmt.Sprintf("Swift code '%s' not found", code),
+				"error":     ERRORS.ErrCodeSwiftRecordNotFound,
 			})
 			return
 		}
@@ -35,10 +40,14 @@ func SwiftCode(c *gin.Context) {
 	// Query the database for branches
 	if bank.IsHeadquarters {
 		var branches []models.SwiftBranchRow
-		err := database.DB.Table(TABLE_NAME).Where("bank_symbol = ? AND swift_code <> ?", bank.BankSymbol, bank.SwiftCode).Find(&branches).Error
-		if err != nil {
+		if err := database.DB.Table(tableName).
+			Where("bank_symbol = ? AND swift_code <> ?", bank.BankSymbol, bank.SwiftCode).
+			Find(&branches).Error; err != nil {
 			routerutils.FailDatabase(c, err, ERRORS.ErrCodeInternalDatabase)
+			return
 		}
+
+		// Apply headquarter response structure
 		headquarter := models.SwiftHeadquarterRow{
 			Address:       bank.Address,
 			BankName:      bank.BankName,
@@ -50,8 +59,9 @@ func SwiftCode(c *gin.Context) {
 		}
 		routerutils.Ok(c, headquarter)
 		return
-
 	}
+
+	// Branch response structure
 	branch := models.SwiftBranchRow{
 		Address:       bank.Address,
 		BankName:      bank.BankName,

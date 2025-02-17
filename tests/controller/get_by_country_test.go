@@ -1,4 +1,4 @@
-package tests
+package controller_tests
 
 import (
 	"net/http"
@@ -14,10 +14,10 @@ import (
 var router_country = rtr.CreateRouter("/v1")
 
 func TestGetByCountryCode(t *testing.T) {
-	database.SetupTestDatabase("../../../config")
+	database.SetupTestDatabase()
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/swift-codes/country/AW", nil)
-	router.ServeHTTP(w, req)
+	router_country.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Equal(t, `{
@@ -93,20 +93,20 @@ func TestGetByCountryCode(t *testing.T) {
 }
 
 func TestGetNoCountry(t *testing.T) {
-	database.SetupTestDatabase("../../../config")
+	database.SetupTestDatabase()
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/swift-codes/country", nil)
-	router.ServeHTTP(w, req)
+	router_country.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
 	assert.Equal(t, w.Body.String(), `{"error":2,"error_msg":"Swift code 'country' not found"}`)
 }
 
 func TestWrongCountry(t *testing.T) {
-	database.SetupTestDatabase("../../../config")
+	database.SetupTestDatabase()
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/swift-codes/country/XX", nil)
-	router.ServeHTTP(w, req)
+	router_country.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
 	assert.Equal(t, w.Body.String(), `{"error":3,"error_msg":"Country ISO2 code 'XX' not found"}`)

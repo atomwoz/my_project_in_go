@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// CreateRouter creates a new router with the specified prefix.
 func CreateRouter(prefix string) *gin.Engine {
 	router := gin.Default()
 	api := router.Group(prefix)

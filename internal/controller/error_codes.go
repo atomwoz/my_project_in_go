@@ -1,6 +1,7 @@
 package controller
 
-//Manually wrting hex'es to maintain readability and grep'ability
+// Struct to hold error codes, not magic numbers
+// Manually written hex'es to maintain readability and grep'ability
 
 var ERRORS = struct {
 	ErrCodeInternalDatabase    int

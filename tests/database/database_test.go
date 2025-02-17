@@ -1,4 +1,4 @@
-package tests
+package database_tests
 
 import (
 	"testing"
@@ -8,7 +8,7 @@ import (
 )
 
 func TestDBConnection(t *testing.T) {
-	database.SetupDatabaseForTesting("../../../config")
+	database.SetupDatabaseForTesting()
 
 	var test int64
 	database.DB.Raw("SELECT 2+5").Find(&test)

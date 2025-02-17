@@ -65,12 +65,17 @@ func SetupDatabase() {
 	setupDB(viper.GetString("db.dbname"))
 }
 
-func SetupTestDatabase(location string) {
+func SetupTestDatabase() {
+	LoadConfig("../../config")
+	setupDB(viper.GetString("db.testdb"))
+}
+
+func SetupTestDatabaseWithConfig(location string) {
 	LoadConfig(location)
 	setupDB(viper.GetString("db.testdb"))
 }
 
-func SetupDatabaseForTesting(location string) {
-	LoadConfig(location)
+func SetupDatabaseForTesting() {
+	LoadConfig("../../config")
 	setupDB(viper.GetString("db.dbname"))
 }

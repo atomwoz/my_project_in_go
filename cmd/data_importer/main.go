@@ -18,12 +18,12 @@ func ImportSwiftCodes(db *gorm.DB, filePath string) {
 
 	countryCodes := make(map[string]string)
 
+	// CSV file handling
 	file, err := os.Open(filePath)
 	if err != nil {
 		log.Fatalf("Failed to open file: %v", err)
 	}
 	defer file.Close()
-
 	reader := csv.NewReader(file)
 	records, err := reader.ReadAll()
 	if err != nil {
@@ -38,6 +38,7 @@ func ImportSwiftCodes(db *gorm.DB, filePath string) {
 			continue // Skip invalid rows
 		}
 
+		//Creating a data model
 		countryCode := strings.ToUpper(strings.TrimSpace(row[0]))
 		swift := strings.TrimSpace(row[1])
 		bank := strings.TrimSpace(row[3])
@@ -46,6 +47,7 @@ func ImportSwiftCodes(db *gorm.DB, filePath string) {
 		countryName := strings.ToUpper(strings.TrimSpace(row[6]))
 		timeZone := strings.TrimSpace(row[7])
 
+		symbol := swift[:8]
 		isHQ := strings.HasSuffix(swift, "XXX")
 
 		if _, ok := countryCodes[countryCode]; !ok {
@@ -64,12 +66,15 @@ func ImportSwiftCodes(db *gorm.DB, filePath string) {
 			Address:        address,
 			TimeZone:       timeZone,
 			IsHeadquarters: isHQ,
+			BankSymbol:     symbol,
 		})
 	}
 
 	for i, dbName := range []string{viper.GetString("db.dbname"), viper.GetString("db.testdb")} {
 
 		var exists int
+
+		// Check if the database exists
 		checkQuery := "SELECT 1 FROM pg_database WHERE datname = ?"
 		if err := db.Raw(checkQuery, dbName).Scan(&exists).Error; err != nil {
 			log.Fatalf("Failed to check database existence: %v", err)
@@ -85,8 +90,10 @@ func ImportSwiftCodes(db *gorm.DB, filePath string) {
 		} else {
 			log.Printf("Database %s already exists.", dbName)
 		}
+
+		// Handling test database
 		if i == 1 {
-			database.SetupTestDatabase("config")
+			database.SetupTestDatabaseWithConfig("config")
 			db = database.DB
 		}
 
@@ -95,11 +102,12 @@ func ImportSwiftCodes(db *gorm.DB, filePath string) {
 			log.Fatalf("Failed to migrate database: %v", err)
 		}
 
-		// Create a table for Swift codes
+		// Clearing a table for data
 		if err := db.Exec("TRUNCATE TABLE " + viper.GetString("db.table")).Error; err != nil {
 			log.Fatalf("Failed to truncate table: %v", err)
 		}
 
+		//Insert data
 		if err := db.Create(swiftCodes).Error; err != nil {
 			log.Fatalf("Failed to insert Swift codes: %v", err)
 		}
