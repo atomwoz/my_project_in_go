@@ -69,3 +69,8 @@ func SetupTestDatabase(location string) {
 	LoadConfig(location)
 	setupDB(viper.GetString("db.testdb"))
 }
+
+func SetupDatabaseForTesting(location string) {
+	LoadConfig(location)
+	setupDB(viper.GetString("db.dbname"))
+}
