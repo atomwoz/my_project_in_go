@@ -8,7 +8,7 @@ import (
 )
 
 func FailDatabase(c *gin.Context, err error, code int) {
-	c.JSON(http.StatusInternalServerError, gin.H{"error_msg": "Database error", "details": err.Error(), "error": code})
+	c.JSON(http.StatusInternalServerError, gin.H{"error_msg": err.Error(), "error": code})
 }
 
 func Ok(c *gin.Context, data interface{}) {

@@ -2,5 +2,6 @@
 
 ## Error codes
 
-1. Swift record not found
-2. Internal database error
+1. Internal database error
+2. Swift record not found
+3. Country code not found

@@ -23,11 +23,11 @@ func SwiftCode(c *gin.Context) {
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusNotFound, gin.H{
-				"error_msg": "Swift code not found", "error": 1,
+				"error_msg": "Swift code '" + c.Param("code") + "' not found", "error": ERRORS.ErrCodeSwiftRecordNotFound,
 			})
 			return
 		}
-		routerutils.FailDatabase(c, err, 2)
+		routerutils.FailDatabase(c, err, ERRORS.ErrCodeInternalDatabase)
 		return
 	}
 
@@ -37,7 +37,7 @@ func SwiftCode(c *gin.Context) {
 		var branches []models.SwiftBranchRow
 		err := database.DB.Table(TABLE_NAME).Where("bank_symbol = ? AND swift_code <> ?", bank.BankSymbol, bank.SwiftCode).Find(&branches).Error
 		if err != nil {
-			routerutils.FailDatabase(c, err, 2)
+			routerutils.FailDatabase(c, err, ERRORS.ErrCodeInternalDatabase)
 		}
 		headquarter := models.SwiftHeadquarterRow{
 			Address:       bank.Address,

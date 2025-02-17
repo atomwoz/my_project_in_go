@@ -23,10 +23,9 @@ type SwiftHeadquarterRow struct {
 	Address       string           `json:"address" gorm:"column:address"`
 	CountryCode   string           `json:"countryISO2" gorm:"column:country_code"`
 	CountryName   string           `json:"countryName" gorm:"column:country_name"`
-	IsHeadquarter bool             `json:"isHeadquarter" gorm:"column:is_headquarter"`
+	IsHeadquarter bool             `json:"isHeadquarter" gorm:"column:is_headquarters"`
 	SwiftCode     string           `json:"swiftCode" gorm:"column:swift_code"`
 	Branches      []SwiftBranchRow `json:"branches" gorm:"foreignKey:BankName;references:BankName"`
-	bankSymbol    string           `json:"bankSymbol" gorm:"column:bank_symbol"`
 }
 
 type SwiftBranchRow struct {
@@ -34,6 +33,6 @@ type SwiftBranchRow struct {
 	Address       string `json:"address" gorm:"column:address"`
 	CountryCode   string `json:"countryISO2" gorm:"column:country_code"`
 	CountryName   string `json:"countryName" gorm:"column:country_name"`
-	IsHeadquarter bool   `json:"isHeadquarter" gorm:"column:is_headquarter"`
+	IsHeadquarter bool   `json:"isHeadquarter" gorm:"column:is_headquarters"`
 	SwiftCode     string `json:"swiftCode" gorm:"column:swift_code"`
 }

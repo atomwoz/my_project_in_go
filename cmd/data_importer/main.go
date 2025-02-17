@@ -43,7 +43,6 @@ func ImportSwiftCodes(db *gorm.DB, filePath string) {
 		countryName := strings.ToUpper(strings.TrimSpace(row[6]))
 		timeZone := strings.TrimSpace(row[7])
 
-		symbol := swift[:8]
 		isHQ := strings.HasSuffix(swift, "XXX")
 
 		swiftCodes = append(swiftCodes, models.SwiftModel{
@@ -55,7 +54,6 @@ func ImportSwiftCodes(db *gorm.DB, filePath string) {
 			Address:        address,
 			TimeZone:       timeZone,
 			IsHeadquarters: isHQ,
-			BankSymbol:     symbol,
 		})
 	}
 

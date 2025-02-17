@@ -10,6 +10,7 @@ func CreateRouter(prefix string) *gin.Engine {
 	api := router.Group(prefix)
 	{
 		api.GET("swift-codes/:code", controller.SwiftCode)
+		api.GET("swift-codes/country/:country_code", controller.GetByCountry)
 	}
 	return router
 }
