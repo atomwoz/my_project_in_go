@@ -97,5 +97,5 @@ func TestWrongSwift(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
-	assert.Equal(t, w.Body.String(), `{"error":1,"error_msg":"Swift code not found"}`)
+	assert.Equal(t, w.Body.String(), `{"error":2,"error_msg":"Swift code 'ALA_MA_KOTA' not found"}`)
 }
