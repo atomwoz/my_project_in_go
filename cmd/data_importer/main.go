@@ -15,6 +15,9 @@ import (
 
 // ImportSwiftCodes reads a CSV file and imports Swift codes into the database.
 func ImportSwiftCodes(db *gorm.DB, filePath string) {
+
+	countryCodes := make(map[string]string)
+
 	file, err := os.Open(filePath)
 	if err != nil {
 		log.Fatalf("Failed to open file: %v", err)
@@ -44,6 +47,13 @@ func ImportSwiftCodes(db *gorm.DB, filePath string) {
 		timeZone := strings.TrimSpace(row[7])
 
 		isHQ := strings.HasSuffix(swift, "XXX")
+
+		if _, ok := countryCodes[countryCode]; !ok {
+			countryCodes[countryCode] = countryName
+		} else if countryCodes[countryCode] != countryName {
+			log.Fatalf("Country code %s has multiple names: %s and %s", countryCode, countryCodes[countryCode], countryName)
+			return
+		}
 
 		swiftCodes = append(swiftCodes, models.SwiftModel{
 			SwiftCode:      swift,
