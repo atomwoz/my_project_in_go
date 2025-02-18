@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// GLOBAL Database connection
 var DB *gorm.DB
 
 // LoadConfig initializes Viper and loads configuration from config.yaml
@@ -25,9 +26,10 @@ func LoadConfig(conf_location string) {
 		log.Fatalf("Error reading config file: %v", err)
 	}
 
-	log.Println("Config loaded successfully!")
+	//log.Println("Config loaded successfully!")
 }
 
+// Helper function to setup the database connection
 func setupDB(dbname string) {
 
 	// Construct DSN from Viper settings
@@ -56,7 +58,7 @@ func setupDB(dbname string) {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	log.Println("Connected to database successfully")
+	//log.Println("Connected to database successfully")
 }
 
 // SetupDatabase initializes the database connection
@@ -65,16 +67,19 @@ func SetupDatabase() {
 	setupDB(viper.GetString("db.dbname"))
 }
 
+// SetupTestDatabase initializes connection to the test database
 func SetupTestDatabase() {
 	LoadConfig("../../config")
 	setupDB(viper.GetString("db.testdb"))
 }
 
+// SetupTestDatabaseWithConfig initializes connection to the test database with a custom configuration location
 func SetupTestDatabaseWithConfig(location string) {
 	LoadConfig(location)
 	setupDB(viper.GetString("db.testdb"))
 }
 
+// SetupDatabaseForTesting initializes connection to the test database
 func SetupDatabaseForTesting() {
 	LoadConfig("../../config")
 	setupDB(viper.GetString("db.dbname"))

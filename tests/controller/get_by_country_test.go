@@ -11,10 +11,16 @@ import (
 	"github.com/magiconair/properties/assert"
 )
 
+// Testing router
 var router_country = rtr.CreateRouter("/v1")
 
-func TestGetByCountryCode(t *testing.T) {
+// Initialize database
+func init() {
 	database.SetupTestDatabase()
+}
+
+// TestGetByCountryCode tests the case when the country code is correct.
+func TestGetByCountryCode(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/swift-codes/country/AW", nil)
 	router_country.ServeHTTP(w, req)
@@ -92,22 +98,22 @@ func TestGetByCountryCode(t *testing.T) {
 }`, w.Body.String())
 }
 
+// TestGetNoCountry tests the case when the country code is not found.
 func TestGetNoCountry(t *testing.T) {
-	database.SetupTestDatabase()
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/swift-codes/country", nil)
 	router_country.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
-	assert.Equal(t, w.Body.String(), `{"error":2,"error_msg":"Swift code 'country' not found"}`)
+	assert.Equal(t, w.Body.String(), `{"error":2,"error_msg":"Swift code not found"}`)
 }
 
+// TestWrongCountry tests the case when the country code is wrong.
 func TestWrongCountry(t *testing.T) {
-	database.SetupTestDatabase()
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/swift-codes/country/XX", nil)
 	router_country.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
-	assert.Equal(t, w.Body.String(), `{"error":3,"error_msg":"Country ISO2 code 'XX' not found"}`)
+	assert.Equal(t, w.Body.String(), `{"error":3,"error_msg":"Country ISO2 code not found"}`)
 }

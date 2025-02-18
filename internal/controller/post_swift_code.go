@@ -16,7 +16,7 @@ import (
 // PostNewSwiftRow adds a new SWIFT code entry to the database.
 func PostNewSwiftRow(c *gin.Context) {
 	tableName := viper.GetString("db.table")
-	var candidate models.SwiftBranchRow
+	var candidate models.SwiftModel
 
 	// Bind incoming JSON request to struct
 	if err := c.ShouldBindJSON(&candidate); err != nil {
@@ -26,9 +26,9 @@ func PostNewSwiftRow(c *gin.Context) {
 	candidate.SwiftCode = strings.TrimSpace(strings.ToUpper(candidate.SwiftCode))
 	candidate.CountryCode = strings.TrimSpace(strings.ToUpper(candidate.CountryCode))
 	candidate.CountryName = strings.TrimSpace(strings.ToUpper(candidate.CountryName))
-	candidate.Address = strings.TrimSpace(strings.ToUpper(candidate.Address))
-	candidate.BankName = strings.TrimSpace(strings.ToUpper(candidate.BankName))
-
+	candidate.Address = strings.TrimSpace(candidate.Address)
+	candidate.BankName = strings.TrimSpace(candidate.BankName)
+	candidate.BankSymbol = candidate.SwiftCode[:8]
 	{
 		// Helper function to trim whitespace
 		t := func(s string) string { return strings.TrimSpace(s) }
@@ -46,14 +46,20 @@ func PostNewSwiftRow(c *gin.Context) {
 		return
 	}
 
+	//Check for invalid country name (only letters and spaces)
+	if !regexp.MustCompile(`^[A-Z ]+$`).MatchString(candidate.CountryName) {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid country name"})
+		return
+	}
+
 	// Check for invalid swift code (8 or 11 characters)
-	if len(candidate.SwiftCode) != 8 && len(candidate.SwiftCode) != 11 {
+	if (len(candidate.SwiftCode) != 8 && len(candidate.SwiftCode) != 11) || !regexp.MustCompile(`^[A-Z0-9]+$`).MatchString(candidate.SwiftCode) {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid swift code"})
 		return
 	}
 
 	// Check for non matchin county from swift code and country code
-	if strings.ToUpper(candidate.SwiftCode[3:5]) != candidate.CountryCode {
+	if strings.ToUpper(candidate.SwiftCode[4:6]) != candidate.CountryCode {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "country code does not match swift country code"})
 		return
 	}
@@ -104,7 +110,7 @@ func PostNewSwiftRow(c *gin.Context) {
 	err := database.DB.Table(tableName).Create(&candidate).Error
 
 	if err != nil && strings.Contains(err.Error(), "(SQLSTATE 23505)") {
-		c.JSON(http.StatusConflict, gin.H{"message": "duplicated swift code entry"})
+		c.JSON(http.StatusConflict, gin.H{"message": "duplicated swift code"})
 		return
 	}
 
@@ -115,5 +121,5 @@ func PostNewSwiftRow(c *gin.Context) {
 	}
 
 	// Success response
-	routerutils.Ok(c, gin.H{"message": "ok"})
+	c.JSON(http.StatusCreated, gin.H{"message": "ok"})
 }

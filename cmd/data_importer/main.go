@@ -58,15 +58,15 @@ func ImportSwiftCodes(db *gorm.DB, filePath string) {
 		}
 
 		swiftCodes = append(swiftCodes, models.SwiftModel{
-			SwiftCode:      swift,
-			BankName:       bank,
-			CountryCode:    countryCode,
-			CountryName:    countryName,
-			City:           city,
-			Address:        address,
-			TimeZone:       timeZone,
-			IsHeadquarters: isHQ,
-			BankSymbol:     symbol,
+			SwiftCode:     swift,
+			BankName:      bank,
+			CountryCode:   countryCode,
+			CountryName:   countryName,
+			City:          city,
+			Address:       address,
+			TimeZone:      timeZone,
+			IsHeadquarter: isHQ,
+			BankSymbol:    symbol,
 		})
 	}
 

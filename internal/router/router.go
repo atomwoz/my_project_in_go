@@ -12,7 +12,7 @@ func CreateRouter(prefix string) *gin.Engine {
 	{
 		api.GET("swift-codes/:code", controller.SwiftCode)
 		api.GET("swift-codes/country/:country_code", controller.GetByCountry)
-		api.POST("swift-codes/", controller.PostNewSwiftRow)
+		api.POST("swift-codes", controller.PostNewSwiftRow)
 	}
 	return router
 }

@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"net/http"
 
 	"errors"
@@ -27,7 +26,7 @@ func SwiftCode(c *gin.Context) {
 		Take(&bank).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{
-				"error_msg": fmt.Sprintf("Swift code '%s' not found", code),
+				"error_msg": "Swift code not found",
 				"error":     ERRORS.ErrCodeSwiftRecordNotFound,
 			})
 			return
@@ -38,7 +37,7 @@ func SwiftCode(c *gin.Context) {
 
 	//Branching !!!
 	// Query the database for branches
-	if bank.IsHeadquarters {
+	if bank.IsHeadquarter {
 		var branches []models.SwiftBranchRow
 		if err := database.DB.Table(tableName).
 			Where("bank_symbol = ? AND swift_code <> ?", bank.BankSymbol, bank.SwiftCode).

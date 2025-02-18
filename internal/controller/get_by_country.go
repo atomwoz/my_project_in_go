@@ -32,7 +32,7 @@ func GetByCountry(c *gin.Context) {
 	// Error handling
 	if err == gorm.ErrRecordNotFound || len(rows) == 0 {
 		c.JSON(http.StatusNotFound, gin.H{
-			"error_msg": "Country ISO2 code '" + countryCode + "' not found",
+			"error_msg": "Country ISO2 code not found",
 			"error":     ERRORS.ErrCodeCountryCodeNotFound,
 		})
 		return

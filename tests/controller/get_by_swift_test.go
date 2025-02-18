@@ -11,10 +11,16 @@ import (
 	"github.com/magiconair/properties/assert"
 )
 
+// Testing router
 var router = rtr.CreateRouter("/v1")
 
-func TestGetBySwiftCodeBranch(t *testing.T) {
+// Initialize database
+func init() {
 	database.SetupTestDatabase()
+}
+
+// TestGetBySwiftCodeBranch tests the case when the swift code is a branch.
+func TestGetBySwiftCodeBranch(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/swift-codes/ALBPPLP1BMW", nil)
 	router.ServeHTTP(w, req)
@@ -29,8 +35,9 @@ func TestGetBySwiftCodeBranch(t *testing.T) {
     "swiftCode": "ALBPPLP1BMW"
 }`, w.Body.String())
 }
+
+// TestGetBySwiftHQ tests the case when the swift code is the headquarter, and it has branches.
 func TestGetBySwiftHQ(t *testing.T) {
-	database.SetupTestDatabase()
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/swift-codes/BKSACLRMXXX", nil)
 	router.ServeHTTP(w, req)
@@ -80,8 +87,8 @@ func TestGetBySwiftHQ(t *testing.T) {
 }`, w.Body.String())
 }
 
+// TestGetNoSwift tests the case when the swift code is not provided.
 func TestGetNoSwift(t *testing.T) {
-	database.SetupTestDatabase()
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/swift-codes", nil)
 	router.ServeHTTP(w, req)
@@ -90,12 +97,12 @@ func TestGetNoSwift(t *testing.T) {
 	assert.Equal(t, w.Body.String(), "404 page not found")
 }
 
+// TestWrongSwift tests the case when the swift code is wrong.
 func TestWrongSwift(t *testing.T) {
-	database.SetupTestDatabase()
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/swift-codes/ALA_MA_KOTA", nil)
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
-	assert.Equal(t, w.Body.String(), `{"error":2,"error_msg":"Swift code 'ALA_MA_KOTA' not found"}`)
+	assert.Equal(t, w.Body.String(), `{"error":2,"error_msg":"Swift code not found"}`)
 }
