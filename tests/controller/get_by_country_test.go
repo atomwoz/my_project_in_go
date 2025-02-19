@@ -21,7 +21,7 @@ func init() {
 	database.SetupTestDatabase()
 }
 
-// Helper function to send a GET request and validate response
+// Helper function to send a GET request and validate response, ignoring the order of the keys and formatting
 func testResponseGetL(t *testing.T, path string, expectedStatus int, expectedBody gin.H) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", path, nil)
@@ -31,7 +31,8 @@ func testResponseGetL(t *testing.T, path string, expectedStatus int, expectedBod
 
 	body := w.Body.Bytes()
 
-	// Try to parse JSON response
+	// Comparing the expected message with the actual one in gin.H format, instead of a string
+	// 	to avoid problems with the order of the keys, and blank spaces, new lines, etc.
 	var actual map[string]interface{}
 	err := json.Unmarshal(body, &actual)
 

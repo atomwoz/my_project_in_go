@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"atomwoz.com/remitly_task/internal/config"
 	"atomwoz.com/remitly_task/internal/database"
 	"atomwoz.com/remitly_task/internal/models"
 	"github.com/spf13/viper"
@@ -121,6 +122,7 @@ func main() {
 	filePath := flag.String("file", "data/swift_codes.csv", "Path to the CSV file")
 	flag.Parse()
 
+	config.LoadConfig("config")
 	database.SetupDatabase()
 
 	ImportSwiftCodes(database.DB, *filePath)
