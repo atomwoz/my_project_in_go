@@ -1,10 +1,11 @@
 package controller
 
 import (
+	"errors"
 	"net/http"
 
 	"atomwoz.com/remitly_task/internal/database"
-	"atomwoz.com/remitly_task/internal/database/models"
+	"atomwoz.com/remitly_task/internal/models"
 	routerutils "atomwoz.com/remitly_task/internal/router/router_utils"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
@@ -29,8 +30,8 @@ func GetByCountry(c *gin.Context) {
 		Where("country_code = ?", countryCode).
 		Find(&rows).Error
 
-	// Error handling
-	if err == gorm.ErrRecordNotFound || len(rows) == 0 {
+	// Handle wrong SWIFT code
+	if errors.Is(err, gorm.ErrRecordNotFound) || len(rows) == 0 {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error_msg": "Country ISO2 code not found",
 			"error":     ERRORS.ErrCodeCountryCodeNotFound,

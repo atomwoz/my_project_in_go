@@ -6,7 +6,7 @@ import (
 	"errors"
 
 	"atomwoz.com/remitly_task/internal/database"
-	"atomwoz.com/remitly_task/internal/database/models"
+	"atomwoz.com/remitly_task/internal/models"
 	routerutils "atomwoz.com/remitly_task/internal/router/router_utils"
 
 	"github.com/gin-gonic/gin"
@@ -18,12 +18,11 @@ import (
 func SwiftCode(c *gin.Context) {
 	tableName := viper.GetString("db.table")
 	code := c.Param("code")
-	var bank models.SwiftModel
 
-	//SQL query
-	if err := database.DB.Table(tableName).
-		Where("swift_code = ?", code).
-		Take(&bank).Error; err != nil {
+	// Fetch the SWIFT record from the database
+	bank, err := database.FetchSwiftRecord(code)
+	if err != nil {
+		// Handle wrong SWIFT code
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error_msg": "Swift code not found",

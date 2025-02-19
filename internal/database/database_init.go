@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"atomwoz.com/remitly_task/internal/config"
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -11,23 +12,7 @@ import (
 
 // GLOBAL Database connection
 var DB *gorm.DB
-
-// LoadConfig initializes Viper and loads configuration from config.yaml
-func LoadConfig(conf_location string) {
-	viper.SetConfigName("config")      // Config file name without extension
-	viper.SetConfigType("yaml")        // Config type
-	viper.AddConfigPath(conf_location) // Path to look for config file
-
-	// Read in environment variables as overrides
-	viper.AutomaticEnv()
-
-	// Read config file
-	if err := viper.ReadInConfig(); err != nil {
-		log.Fatalf("Error reading config file: %v", err)
-	}
-
-	//log.Println("Config loaded successfully!")
-}
+var DEFAULT_TABLE_NAME string
 
 // Helper function to setup the database connection
 func setupDB(dbname string) {
@@ -52,6 +37,8 @@ func setupDB(dbname string) {
 		timezone,
 	)
 
+	DEFAULT_TABLE_NAME = viper.GetString("db.table")
+
 	var err error
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
@@ -63,24 +50,23 @@ func setupDB(dbname string) {
 
 // SetupDatabase initializes the database connection
 func SetupDatabase() {
-	LoadConfig("config")
 	setupDB(viper.GetString("db.dbname"))
 }
 
 // SetupTestDatabase initializes connection to the test database
 func SetupTestDatabase() {
-	LoadConfig("../../config")
+	config.LoadConfig("../../config")
 	setupDB(viper.GetString("db.testdb"))
 }
 
 // SetupTestDatabaseWithConfig initializes connection to the test database with a custom configuration location
 func SetupTestDatabaseWithConfig(location string) {
-	LoadConfig(location)
+	config.LoadConfig(location)
 	setupDB(viper.GetString("db.testdb"))
 }
 
 // SetupDatabaseForTesting initializes connection to the test database
 func SetupDatabaseForTesting() {
-	LoadConfig("../../config")
+	config.LoadConfig("../../config")
 	setupDB(viper.GetString("db.dbname"))
 }
