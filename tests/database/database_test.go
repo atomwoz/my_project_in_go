@@ -12,7 +12,7 @@ import (
 )
 
 func TestDBConnection(t *testing.T) {
-	database.SetupDatabaseForTesting()
+	database.SetupTestDatabase()
 
 	var test int64
 	database.DB.Raw("SELECT 2+5").Find(&test)

@@ -5,8 +5,10 @@ import (
 	"log"
 
 	"atomwoz.com/remitly_task/internal/config"
+	"atomwoz.com/remitly_task/internal/models"
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
@@ -14,16 +16,22 @@ import (
 var DB *gorm.DB
 var DEFAULT_TABLE_NAME string
 
-// Helper function to setup the database connection
+// Helper function to setup the PostgreSQL database connection
 func setupDB(dbname string) {
-
 	// Construct DSN from Viper settings
 	var timezone string
+	var sslmode string
 
 	if viper.GetString("db.timezone") == "" {
 		timezone = "Europe/Warsaw"
 	} else {
 		timezone = viper.GetString("db.timezone")
+	}
+
+	if viper.GetString("db.sslmode") == "" {
+		sslmode = "disable"
+	} else {
+		sslmode = viper.GetString("db.sslmode")
 	}
 
 	dsn := fmt.Sprintf(
@@ -33,7 +41,7 @@ func setupDB(dbname string) {
 		viper.GetString("db.password"),
 		dbname,
 		viper.GetInt("db.port"),
-		viper.GetString("db.sslmode"),
+		sslmode,
 		timezone,
 	)
 
@@ -44,29 +52,29 @@ func setupDB(dbname string) {
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
-
-	//log.Println("Connected to database successfully")
 }
 
-// SetupDatabase initializes the database connection
+// Helper function to setup the SQLite database connection for testing
+func setupSQLite(dbPath string) {
+	DEFAULT_TABLE_NAME = viper.GetString("db.table")
+
+	var err error
+	DB, err = gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
+	if err != nil {
+		log.Fatalf("Failed to connect to SQLite database: %v", err)
+	}
+}
+
+// SetupDatabase initializes the PostgreSQL connection
 func SetupDatabase() {
 	setupDB(viper.GetString("db.dbname"))
 }
 
-// SetupTestDatabase initializes connection to the test database
+// SetupTestDatabase initializes connection to a SQLite database in the test folder
 func SetupTestDatabase() {
-	config.LoadConfig("../../config")
-	setupDB(viper.GetString("db.testdb"))
-}
-
-// SetupTestDatabaseWithConfig initializes connection to the test database with a custom configuration location
-func SetupTestDatabaseWithConfig(location string) {
-	config.LoadConfig(location)
-	setupDB(viper.GetString("db.testdb"))
-}
-
-// SetupDatabaseForTesting initializes connection to the test database
-func SetupDatabaseForTesting() {
-	config.LoadConfig("../../config")
-	setupDB(viper.GetString("db.dbname"))
+	config.LoadConfig()
+	// Specify the SQLite file path. Adjust if a different path is desired.
+	dbPath := "../../tests/test.db"
+	setupSQLite(dbPath)
+	DB.AutoMigrate(&models.SwiftModel{})
 }

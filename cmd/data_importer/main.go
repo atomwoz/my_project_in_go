@@ -94,7 +94,7 @@ func ImportSwiftCodes(db *gorm.DB, filePath string) {
 
 		// Handling test database
 		if i == 1 {
-			database.SetupTestDatabaseWithConfig("config")
+			database.SetupTestDatabase()
 			db = database.DB
 		}
 
@@ -112,6 +112,7 @@ func ImportSwiftCodes(db *gorm.DB, filePath string) {
 		if err := db.Create(swiftCodes).Error; err != nil {
 			log.Fatalf("Failed to insert Swift codes: %v", err)
 		}
+
 	}
 	database.SetupDatabase()
 	log.Println("Swift codes imported successfully!")
@@ -119,10 +120,10 @@ func ImportSwiftCodes(db *gorm.DB, filePath string) {
 
 func main() {
 
-	filePath := flag.String("file", "data/swift_codes.csv", "Path to the CSV file")
+	filePath := flag.String("file", "swift_codes.csv", "Path to the CSV file")
 	flag.Parse()
 
-	config.LoadConfig("config")
+	config.LoadConfig()
 	database.SetupDatabase()
 
 	ImportSwiftCodes(database.DB, *filePath)
