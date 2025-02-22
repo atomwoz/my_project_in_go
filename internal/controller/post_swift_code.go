@@ -32,7 +32,7 @@ func PostNewSwiftRow(c *gin.Context) {
 	}
 
 	if err := database.InsertSwiftRecord(&candidate); err != nil {
-		if strings.Contains(err.Error(), "(SQLSTATE 23505)") {
+		if strings.Contains(err.Error(), "(SQLSTATE 23505)") || strings.Contains(err.Error(), "UNIQUE constraint failed") {
 			c.JSON(http.StatusConflict, gin.H{"message": "duplicated swift code"})
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})

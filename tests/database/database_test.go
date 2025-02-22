@@ -11,9 +11,11 @@ import (
 	"gorm.io/gorm"
 )
 
-func TestDBConnection(t *testing.T) {
+func init() {
 	database.SetupTestDatabase()
+}
 
+func TestDBConnection(t *testing.T) {
 	var test int64
 	database.DB.Raw("SELECT 2+5").Find(&test)
 	assert.Equal(t, test, int64(7))
@@ -54,7 +56,7 @@ func TestDBInsertAndDelete(t *testing.T) {
 	assert.Equal(t, record.BankName, "REMITLY")
 
 	err = database.InsertSwiftRecord(record)
-	assert.Equal(t, strings.Contains(err.Error(), "(SQLSTATE 23505)"), true, "Error should contain SQLSTATE 23505")
+	assert.Equal(t, strings.Contains(err.Error(), "(SQLSTATE 23505)") || strings.Contains(err.Error(), "UNIQUE constraint failed"), true, "Error should contain SQLSTATE 23505")
 
 	x, _ = database.FetchSwiftRecord("ACFCWWM1XXX")
 	err = database.DeleteSwiftRecord(x)

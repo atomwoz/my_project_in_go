@@ -27,5 +27,5 @@ Thumbs.db
 # build
 build/
 
-#env
-.env
+#Used in development
+dump.sql

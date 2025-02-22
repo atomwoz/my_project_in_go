@@ -16,9 +16,9 @@ func LoadConfig() {
 	//viper.AddConfigPath(conf_location) // Path to look for config file
 
 	// Read in environment variables as overrides
-	// viper.SetConfigType("env")
-	// viper.SetConfigName(".env")
-	// viper.AddConfigPath(".")
+	viper.SetConfigType("env")
+	viper.SetConfigName(".env")
+	viper.AddConfigPath(".")
 	viper.AutomaticEnv()
 
 	// Replace dots with underscores to match environment variable style.
@@ -36,6 +36,11 @@ func LoadConfig() {
 	viper.BindEnv("batch_size", "DB_BATCH_SIZE")
 	viper.BindEnv("debug", "DEBUG_MODE")
 	viper.BindEnv("db.timezone", "DB_TIMEZONE")
+
+	// Set default table name if .env is not readed because works on tests
+	if viper.GetString("db.table") == "" {
+		viper.Set("db.table", "banks")
+	}
 
 	// Read config file
 	// if err := viper.ReadInConfig(); err != nil {
