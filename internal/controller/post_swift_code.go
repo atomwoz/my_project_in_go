@@ -20,7 +20,7 @@ func PostNewSwiftRow(c *gin.Context) {
 	var candidate models.SwiftModel
 
 	if err := c.ShouldBindJSON(&candidate); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "malformed JSON in request"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "malformed JSON payload"})
 		return
 	}
 

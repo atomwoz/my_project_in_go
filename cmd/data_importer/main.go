@@ -71,51 +71,44 @@ func ImportSwiftCodes(db *gorm.DB, filePath string) {
 		})
 	}
 
-	for i, dbName := range []string{viper.GetString("db.dbname"), viper.GetString("db.testdb")} {
+	dbName := viper.GetString("db.dbname")
 
-		var exists int
+	var exists int
 
-		// Check if the database exists
-		checkQuery := "SELECT 1 FROM pg_database WHERE datname = ?"
-		if err := db.Raw(checkQuery, dbName).Scan(&exists).Error; err != nil {
-			log.Fatalf("Failed to check database existence: %v", err)
-		}
-
-		// Create the database if it doesn't exist
-		if exists != 1 {
-			createQuery := "CREATE DATABASE " + dbName
-			if err := db.Exec(createQuery).Error; err != nil {
-				log.Fatalf("Failed to create database: %v", err)
-			}
-			log.Printf("Database %s created successfully!", dbName)
-		} else {
-			log.Printf("Database %s already exists.", dbName)
-		}
-
-		// Handling test database
-		if i == 1 {
-			database.SetupTestDatabase()
-			db = database.DB
-		}
-
-		// Migrate the database
-		if err := db.AutoMigrate(&models.SwiftModel{}); err != nil {
-			log.Fatalf("Failed to migrate database: %v", err)
-		}
-
-		// Clearing a table for data
-		if err := db.Exec("TRUNCATE TABLE " + viper.GetString("db.table")).Error; err != nil {
-			log.Fatalf("Failed to truncate table: %v", err)
-		}
-
-		//Insert data
-		if err := db.Create(swiftCodes).Error; err != nil {
-			log.Fatalf("Failed to insert Swift codes: %v", err)
-		}
-
+	// Check if the database exists
+	checkQuery := "SELECT 1 FROM pg_database WHERE datname = ?"
+	if err := db.Raw(checkQuery, dbName).Scan(&exists).Error; err != nil {
+		log.Fatalf("Failed to check database existence: %v", err)
 	}
-	database.SetupDatabase()
-	log.Println("Swift codes imported successfully!")
+
+	// Create the database if it doesn't exist
+	if exists != 1 {
+		createQuery := "CREATE DATABASE " + dbName
+		if err := db.Exec(createQuery).Error; err != nil {
+			log.Fatalf("Failed to create database: %v", err)
+		}
+		log.Printf("Database %s created successfully!", dbName)
+	} else {
+		log.Printf("Database %s already exists.", dbName)
+	}
+
+	// Migrate the database
+	if err := db.AutoMigrate(&models.SwiftModel{}); err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
+	}
+
+	// Clearing a table for data
+	if err := db.Exec("TRUNCATE TABLE " + viper.GetString("db.table")).Error; err != nil {
+		log.Fatalf("Failed to truncate table: %v", err)
+	}
+
+	//Insert data
+	if err := db.Create(swiftCodes).Error; err != nil {
+		log.Fatalf("Failed to insert Swift codes: %v", err)
+	}
+
+	log.Printf("Successfully imported %d Swift codes", len(swiftCodes))
+
 }
 
 func main() {

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	"atomwoz.com/remitly_task/internal/config"
 	"atomwoz.com/remitly_task/internal/database"
 	"atomwoz.com/remitly_task/internal/router"
@@ -17,5 +19,6 @@ func main() {
 	} else {
 		gin.SetMode(gin.ReleaseMode)
 	}
+	log.Println("Starting server on port 8080")
 	router.CreateRouter("/v1").Run(":8080")
 }
