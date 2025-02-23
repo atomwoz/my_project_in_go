@@ -69,7 +69,7 @@ func TestGetByCountryCode(t *testing.T) {
 
 // TestGetNoCountry tests the case when the country code is not found.
 func TestGetNoCountry(t *testing.T) {
-	testResponseGetL(t, "/v1/swift-codes/country", http.StatusNotFound, gin.H{"error": 2, "error_msg": "Swift code not found"})
+	testResponseGetL(t, "/v1/swift-codes/country", http.StatusNotFound, gin.H{"error": 2, "error_msg": "SWIFT code not found"})
 }
 
 // TestWrongCountry tests the case when the country code is wrong.

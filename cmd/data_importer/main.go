@@ -9,8 +9,8 @@ import (
 
 	"atomwoz.com/remitly_task/internal/config"
 	"atomwoz.com/remitly_task/internal/database"
+	"atomwoz.com/remitly_task/internal/logs"
 	"atomwoz.com/remitly_task/internal/models"
-	"github.com/spf13/viper"
 	"gorm.io/gorm"
 )
 
@@ -22,13 +22,13 @@ func ImportSwiftCodes(db *gorm.DB, filePath string) {
 	// CSV file handling
 	file, err := os.Open(filePath)
 	if err != nil {
-		log.Fatalf("Failed to open file: %v", err)
+		logs.Fatal("Failed to open file: %v", err)
 	}
 	defer file.Close()
 	reader := csv.NewReader(file)
 	records, err := reader.ReadAll()
 	if err != nil {
-		log.Fatalf("Failed to read CSV: %v", err)
+		logs.Fatal("Failed to read CSV: %v", err)
 	}
 
 	// Iterate over records and create model from each csv row
@@ -54,7 +54,7 @@ func ImportSwiftCodes(db *gorm.DB, filePath string) {
 		if _, ok := countryCodes[countryCode]; !ok {
 			countryCodes[countryCode] = countryName
 		} else if countryCodes[countryCode] != countryName {
-			log.Fatalf("Country code %s has multiple names: %s and %s", countryCode, countryCodes[countryCode], countryName)
+			logs.Log("Country code %s has multiple names: %s and %s", countryCode, countryCodes[countryCode], countryName)
 			return
 		}
 
@@ -71,7 +71,7 @@ func ImportSwiftCodes(db *gorm.DB, filePath string) {
 		})
 	}
 
-	dbName := viper.GetString("db.dbname")
+	dbName := config.GetDBName()
 
 	var exists int
 
@@ -85,29 +85,29 @@ func ImportSwiftCodes(db *gorm.DB, filePath string) {
 	if exists != 1 {
 		createQuery := "CREATE DATABASE " + dbName
 		if err := db.Exec(createQuery).Error; err != nil {
-			log.Fatalf("Failed to create database: %v", err)
+			logs.Fatal("Failed to create database: %v", err)
 		}
-		log.Printf("Database %s created successfully!", dbName)
+		logs.Log("Database %s created successfully!", dbName)
 	} else {
-		log.Printf("Database %s already exists.", dbName)
+		logs.Log("Database %s already exists.", dbName)
 	}
 
 	// Migrate the database
 	if err := db.AutoMigrate(&models.SwiftModel{}); err != nil {
-		log.Fatalf("Failed to migrate database: %v", err)
+		logs.Fatal("Failed to migrate database: %v", err)
 	}
 
 	// Clearing a table for data
-	if err := db.Exec("TRUNCATE TABLE " + viper.GetString("db.table")).Error; err != nil {
-		log.Fatalf("Failed to truncate table: %v", err)
+	if err := db.Exec("TRUNCATE TABLE " + config.GetTable()).Error; err != nil {
+		logs.Fatal("Failed to truncate table: %v", err)
 	}
 
 	//Insert data
 	if err := db.Create(swiftCodes).Error; err != nil {
-		log.Fatalf("Failed to insert Swift codes: %v", err)
+		logs.Fatal("Failed to insert Swift codes: %v", err)
 	}
 
-	log.Printf("Successfully imported %d Swift codes", len(swiftCodes))
+	logs.Log("Successfully imported %d Swift codes", len(swiftCodes))
 
 }
 

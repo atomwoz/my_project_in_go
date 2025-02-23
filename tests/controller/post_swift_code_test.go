@@ -7,11 +7,11 @@ import (
 	"strings"
 	"testing"
 
+	"atomwoz.com/remitly_task/internal/config"
 	"atomwoz.com/remitly_task/internal/database"
 	rtr "atomwoz.com/remitly_task/internal/router"
 	"github.com/gin-gonic/gin"
 	"github.com/magiconair/properties/assert"
-	"github.com/spf13/viper"
 )
 
 // Initialize database
@@ -42,7 +42,7 @@ func testResponse(t *testing.T, body gin.H, code int, expectedMessage gin.H) {
 
 // Helper function to delete a record from the database, after successful insertion
 func delRecord(swiftCode string) error {
-	return database.DB.Exec("DELETE FROM "+viper.GetString("db.table")+" WHERE swift_code = ?", swiftCode).Error
+	return database.DB.Exec("DELETE FROM "+config.GetTable()+" WHERE swift_code = ?", swiftCode).Error
 }
 
 // TestPostNewCorrectSwiftRow tests the case when good data is inserted
@@ -138,7 +138,7 @@ func TestPostWrongJSON(t *testing.T) {
 	post_router.ServeHTTP(w, req)
 
 	assert.Equal(t, w.Code, 400)
-	assert.Equal(t, w.Body.String(), "{\"message\":\"malformed JSON in request\"}")
+	assert.Equal(t, w.Body.String(), "{\"message\":\"malformed JSON payload\"}")
 
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("POST", "/v1/swift-codes", strings.NewReader(""))
@@ -146,7 +146,7 @@ func TestPostWrongJSON(t *testing.T) {
 	post_router.ServeHTTP(w, req)
 
 	assert.Equal(t, w.Code, 400)
-	assert.Equal(t, w.Body.String(), "{\"message\":\"malformed JSON in request\"}", "Empty JSON should return malformed JSON error")
+	assert.Equal(t, w.Body.String(), "{\"message\":\"malformed JSON payload\"}", "Empty JSON should return malformed JSON error")
 }
 
 // TestPostInvalidSwiftCode tests the case when the swift code is too short or too long
@@ -214,7 +214,7 @@ func TestPostInvalidCountryName(t *testing.T) {
 	testResponse(t, gin.H{
 		"swiftCode":     "XABXPLP1MW1",
 		"countryISO2":   "PL",
-		"countryName":   "VATICAN",
+		"countryName":   "VATI",
 		"address":       "KRAKÓW, MAŁOPOLSKIE",
 		"bankName":      "FICTIONAL BANK",
 		"isHeadquarter": false,
@@ -224,8 +224,8 @@ func TestPostInvalidCountryName(t *testing.T) {
 // TestPostCountryHasDifferentName tests the case when the country name has a different code
 func TestPostCountryHasDifferentCode(t *testing.T) {
 	testResponse(t, gin.H{
-		"swiftCode":     "XABXAAP1MW1",
-		"countryISO2":   "AA",
+		"swiftCode":     "XABXZFP1MW1",
+		"countryISO2":   "ZF",
 		"countryName":   "POLAND",
 		"address":       "KRAKÓW, MAŁOPOLSKIE",
 		"bankName":      "FICTIONAL BANK",

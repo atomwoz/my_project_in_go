@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"atomwoz.com/remitly_task/internal/database"
+	"atomwoz.com/remitly_task/internal/logs"
 	routerutils "atomwoz.com/remitly_task/internal/router/router_utils"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -18,6 +19,7 @@ func DeleteSwiftRow(c *gin.Context) {
 
 	// Handle wrong SWIFT code
 	if errors.Is(err, gorm.ErrRecordNotFound) {
+		logs.Warn("SWIFT code '%s' not found", code)
 		c.JSON(http.StatusNotFound, gin.H{
 			"message": "SWIFT code not found",
 		})
@@ -26,6 +28,7 @@ func DeleteSwiftRow(c *gin.Context) {
 
 	// Handle any other database error
 	if err != nil {
+		logs.Error("Unknown database error: %s", err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
 		})
@@ -35,11 +38,12 @@ func DeleteSwiftRow(c *gin.Context) {
 	// Deleting the record
 	err = database.DeleteSwiftRecord(recordToDelete)
 	if err != nil {
+		logs.Error("Failed to delete SWIFT code '%s': %s", code, err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
 		})
 		return
 	}
-
+	logs.Log("Deleted SWIFT code '%s'", code)
 	routerutils.Ok(c, gin.H{"message": "Deleted successfully"})
 }

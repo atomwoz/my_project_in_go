@@ -26,6 +26,7 @@ cd my_project_in_go
 
 For safety, you must change the default password for the database.  
 It is also recomended to change the database user too.
+NOTE: Everything in `.env` could be overriden by environment variables.
 
 ```shell
 vim .env
@@ -65,7 +66,7 @@ go test ./tests/...
 They return errors with the following structure:
 
 ```json
-{ "error": code, "error_message": string message }
+{ "error": "<code>", "error_message": "<string message>" }
 ```
 
 Where code is an integer and message is a string.  
@@ -80,7 +81,7 @@ Possible error codes are:
 It returns only messages with the following structure:
 
 ```json
-{ "message": string message }
+{ "message": "<string message>" }
 ```
 
 Where message is a string.

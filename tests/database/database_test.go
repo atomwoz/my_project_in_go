@@ -1,7 +1,6 @@
 package database_tests
 
 import (
-	"log"
 	"strings"
 	"testing"
 
@@ -23,7 +22,6 @@ func TestDBConnection(t *testing.T) {
 }
 func TestDBFetch(t *testing.T) {
 	record, err := database.FetchSwiftRecord("ALBPPLP1BMW")
-	log.Println(record)
 	assert.Equal(t, err, nil, "Error should be nil")
 	assert.Equal(t, record == (*models.SwiftModel)(nil), false, "Record should not be nil")
 	//assert.Equal(t, record.BankName, "AMAGIS CAPITAL FUNDS SICAV PLC")

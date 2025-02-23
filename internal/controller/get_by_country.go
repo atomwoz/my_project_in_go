@@ -5,10 +5,10 @@ import (
 	"net/http"
 
 	"atomwoz.com/remitly_task/internal/database"
+	"atomwoz.com/remitly_task/internal/logs"
 	"atomwoz.com/remitly_task/internal/models"
 	routerutils "atomwoz.com/remitly_task/internal/router/router_utils"
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 	"gorm.io/gorm"
 )
 
@@ -22,16 +22,12 @@ type CountryBranchesResponse struct {
 // GetByCountry retrieves all branches in a country based on the country code.
 func GetByCountry(c *gin.Context) {
 	countryCode := c.Param("country_code")
-	tableName := viper.GetString("db.table")
-	var rows []models.SwiftBranchRow
 
-	// SQL query
-	err := database.DB.Table(tableName).
-		Where("country_code = ?", countryCode).
-		Find(&rows).Error
+	rows, err := database.GetSiftRecordsByCountryCode(countryCode)
 
 	// Handle wrong SWIFT code
 	if errors.Is(err, gorm.ErrRecordNotFound) || len(rows) == 0 {
+		logs.Warn("Country ISO2 code '%s' not found", countryCode)
 		c.JSON(http.StatusNotFound, gin.H{
 			"error_msg": "Country ISO2 code not found",
 			"error":     ERRORS.ErrCodeCountryCodeNotFound,
@@ -39,9 +35,7 @@ func GetByCountry(c *gin.Context) {
 		return
 	}
 
-	// Handle any other database error
-	if err != nil {
-		routerutils.FailDatabase(c, err, ERRORS.ErrCodeInternalDatabase)
+	if routerutils.FailDatabaseIfError(c, err) {
 		return
 	}
 
@@ -52,5 +46,6 @@ func GetByCountry(c *gin.Context) {
 		Branches:    rows,
 	}
 
+	logs.Log("Fetched records for country '%s'", countryCode)
 	routerutils.Ok(c, response)
 }

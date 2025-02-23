@@ -23,3 +23,16 @@ func DeleteSwiftRecord(record *models.SwiftModel) error {
 func InsertSwiftRecord(record *models.SwiftModel) error {
 	return DB.Table(DEFAULT_TABLE_NAME).Create(record).Error
 }
+
+// GetSiftRecordsByCountryCode retrieves all SWIFT records for a given country code
+func GetSiftRecordsByCountryCode(countryCode string) ([]models.SwiftBranchRow, error) {
+	var records []models.SwiftBranchRow
+	err := DB.Table(DEFAULT_TABLE_NAME).
+		Where("country_code = ?", countryCode).
+		Find(&records).Error
+
+	if err != nil {
+		return nil, err
+	}
+	return records, nil
+}

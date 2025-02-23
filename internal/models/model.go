@@ -1,6 +1,6 @@
 package models
 
-import "github.com/spf13/viper"
+import "atomwoz.com/remitly_task/internal/config"
 
 type SwiftModel struct {
 	SwiftCode     string `json:"swiftCode" gorm:"column:swift_code;primaryKey"`
@@ -15,7 +15,7 @@ type SwiftModel struct {
 }
 
 func (SwiftModel) TableName() string {
-	return viper.GetString("db.table")
+	return config.GetTable()
 }
 
 type SwiftHeadquarterRow struct {

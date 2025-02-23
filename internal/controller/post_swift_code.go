@@ -7,19 +7,22 @@ import (
 	"regexp"
 	"strings"
 
+	"atomwoz.com/remitly_task/internal/config"
 	"atomwoz.com/remitly_task/internal/database"
+	"atomwoz.com/remitly_task/internal/logs"
 	"atomwoz.com/remitly_task/internal/models"
+	routerutils "atomwoz.com/remitly_task/internal/router/router_utils"
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 	"gorm.io/gorm"
 )
 
 // PostNewSwiftRow adds a new SWIFT code entry to the database.
 func PostNewSwiftRow(c *gin.Context) {
-	tableName := viper.GetString("db.table")
+	tableName := config.GetTable()
 	var candidate models.SwiftModel
 
 	if err := c.ShouldBindJSON(&candidate); err != nil {
+		logs.Warn("Malformed JSON payload: %s", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"message": "malformed JSON payload"})
 		return
 	}
@@ -27,12 +30,14 @@ func PostNewSwiftRow(c *gin.Context) {
 	normalizeSwiftData(&candidate)
 
 	if err := validateSwiftData(&candidate, tableName); err != nil {
+		logs.Warn("Invalid SWIFT data: %s", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
 
 	if err := database.InsertSwiftRecord(&candidate); err != nil {
 		if strings.Contains(err.Error(), "(SQLSTATE 23505)") || strings.Contains(err.Error(), "UNIQUE constraint failed") {
+			logs.Warn("Duplicated SWIFT code: %s", candidate.SwiftCode)
 			c.JSON(http.StatusConflict, gin.H{"message": "duplicated swift code"})
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
@@ -40,7 +45,8 @@ func PostNewSwiftRow(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "ok"})
+	logs.Log("Added new SWIFT code: %s", candidate.SwiftCode)
+	routerutils.Created(c)
 }
 
 func normalizeSwiftData(candidate *models.SwiftModel) {

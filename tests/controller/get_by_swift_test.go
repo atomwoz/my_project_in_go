@@ -88,6 +88,6 @@ func TestGetNoSwift(t *testing.T) {
 func TestWrongSwift(t *testing.T) {
 	testResponseGet(t, "ALA_MA_KOTA", http.StatusNotFound, gin.H{
 		"error":     float64(2), // JSON unmarshaling interprets numbers as float64
-		"error_msg": "Swift code not found",
+		"error_msg": "SWIFT code not found",
 	})
 }

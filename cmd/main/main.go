@@ -1,24 +1,27 @@
 package main
 
 import (
-	"log"
-
 	"atomwoz.com/remitly_task/internal/config"
 	"atomwoz.com/remitly_task/internal/database"
 	"atomwoz.com/remitly_task/internal/router"
+	"github.com/charmbracelet/log"
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 )
+
+const PORT = 8080
 
 // Entry point
 func main() {
 	config.LoadConfig()
 	database.SetupDatabase()
-	if viper.GetBool("debug") {
+	if config.GetDebugMode() {
 		gin.SetMode(gin.DebugMode)
 	} else {
 		gin.SetMode(gin.ReleaseMode)
 	}
-	log.Println("Starting server on port 8080")
-	router.CreateRouter("/v1").Run(":8080")
+	log.Infof("Starting server on port %d", PORT)
+	err := router.CreateRouter("/v1").Run(":8080")
+	if err != nil {
+		log.Fatal("Failed to start server: %v", err)
+	}
 }
