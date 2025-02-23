@@ -9,21 +9,20 @@ import (
 
 func Log(format string, args ...interface{}) {
 	if config.GetDebugMode() {
-		log.Info(format, args...)
+		log.Infof(format, args...)
 	}
 }
 
 func Error(format string, args ...interface{}) {
-	log.Error(format, args...)
-
+	log.Errorf(format, args...)
 }
 
 func Warn(format string, args ...interface{}) {
 	if config.GetDebugMode() {
-		log.Warn(format, args...)
+		log.Warnf(format, args...)
 	}
 }
 
 func Fatal(format string, args ...interface{}) {
-	log.Fatal(format, args...)
+	log.Fatalf(format, args...)
 }

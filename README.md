@@ -25,7 +25,7 @@ cd my_project_in_go
 ### 2. Modify the .env file
 
 For safety, you must change the default password for the database.  
-It is also recomended to change the database user too.
+It is also recomended to change the database user too.  
 NOTE: Everything in `.env` could be overriden by environment variables.
 
 ```shell
@@ -35,10 +35,11 @@ vim .env
 ### 3. Import CSV to the database
 
 It will import the CSV file to the database.  
-The file is located at `./data/swift_data.csv`. If you want to import another file, just place path to it as the first argument.
+The file is located at `./data/swift_data.csv`. If you want to import another file, just place path to it as the first argument.  
+At the first run, it will build the image and setup database.
 
 ```shell
-docker compose run csv_importer
+docker compose run csv_import
 ```
 
 ### 4. Run the application
