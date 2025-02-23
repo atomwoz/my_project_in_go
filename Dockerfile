@@ -25,6 +25,7 @@ ENV CGO_ENABLED=1
 RUN mkdir -p /app/build
 RUN GOOS=linux go build -o /app/build/main ./cmd/main
 RUN GOOS=linux go build -o /app/build/data_importer ./cmd/data_importer
+RUN GOOS=linux go build -o /app/build/db_check ./cmd/db_check
 
 # ================================================
 # Final stage (Runner image)

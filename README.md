@@ -56,8 +56,29 @@ To run tests, you need to have Go installed.
 This project was tested with Go version 1.24.  
 You can find the installation instructions [here](https://golang.org/doc/install)
 
+To run integration tests:  
+NOTE: Connection to the production database is required to run integration tests.
+
 ```shell
 go test ./tests/...
+```
+
+To run unit tests:
+
+```shell
+go test ./internal/...
+```
+
+To test the connection, you can use the following command:
+
+```shell
+docker compose run db_check
+```
+
+To run all tests:
+
+```shell
+go test ./...
 ```
 
 ## Error format

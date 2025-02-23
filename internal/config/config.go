@@ -3,7 +3,7 @@ package config
 import (
 
 	//"strings"
-	"log"
+	"fmt"
 
 	"github.com/spf13/viper"
 )
@@ -35,7 +35,8 @@ func LoadConfig() {
 		return viper.GetString(key) != ""
 	}
 	if !c("DB_HOST") || !c("DB_USER") || !c("DB_PASSWORD") {
-		log.Fatalf("Missing required configuration values. \n Tried to get from .env file %s and enviroment \n Required are: DB_HOST, DB_USER, DB_PASSWORD", viper.ConfigFileUsed())
+		formatted_to_panic := fmt.Sprintf("Missing required configuration values. \n Tried to get from .env file %s and enviroment \n Required are: DB_HOST, DB_USER, DB_PASSWORD", viper.ConfigFileUsed())
+		panic(formatted_to_panic)
 	}
 
 }

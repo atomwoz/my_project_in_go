@@ -21,6 +21,17 @@ services:
     command: /app/data_importer
     profiles:
       - dontstart
+  
+  db_check:
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+    build: .
+    env_file: .env
+    command: /app/db_check
+    profiles:
+      - dontstart
 
   db:
     image: postgres:17

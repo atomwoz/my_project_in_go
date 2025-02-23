@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"strings"
 
-	"atomwoz.com/remitly_task/internal/config"
 	"atomwoz.com/remitly_task/internal/database"
 	"atomwoz.com/remitly_task/internal/logs"
 	"atomwoz.com/remitly_task/internal/models"
@@ -18,7 +17,6 @@ import (
 
 // PostNewSwiftRow adds a new SWIFT code entry to the database.
 func PostNewSwiftRow(c *gin.Context) {
-	tableName := config.GetTable()
 	var candidate models.SwiftModel
 
 	if err := c.ShouldBindJSON(&candidate); err != nil {
@@ -29,7 +27,7 @@ func PostNewSwiftRow(c *gin.Context) {
 
 	normalizeSwiftData(&candidate)
 
-	if err := validateSwiftData(&candidate, tableName); err != nil {
+	if err := validateSwiftData(&candidate); err != nil {
 		logs.Warn("Invalid SWIFT data: %s", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
@@ -55,10 +53,13 @@ func normalizeSwiftData(candidate *models.SwiftModel) {
 	candidate.CountryName = strings.TrimSpace(strings.ToUpper(candidate.CountryName))
 	candidate.Address = strings.TrimSpace(candidate.Address)
 	candidate.BankName = strings.TrimSpace(candidate.BankName)
-	candidate.BankSymbol = candidate.SwiftCode[:8]
+	if len(candidate.SwiftCode) >= 8 {
+		candidate.BankSymbol = candidate.SwiftCode[:8]
+	}
+
 }
 
-func validateSwiftData(candidate *models.SwiftModel, tableName string) error {
+func validateSwiftData(candidate *models.SwiftModel) error {
 	if candidate.SwiftCode == "" || candidate.CountryCode == "" || candidate.CountryName == "" || candidate.BankName == "" || candidate.Address == "" {
 		return fmt.Errorf("required fields are empty")
 	}
@@ -80,7 +81,7 @@ func validateSwiftData(candidate *models.SwiftModel, tableName string) error {
 	}
 
 	var swift models.SwiftModel
-	if err := database.DB.Table(tableName).Where("country_code = ?", candidate.CountryCode).First(&swift).Error; !errors.Is(err, gorm.ErrRecordNotFound) {
+	if err := database.DB.Table(database.DEFAULT_TABLE_NAME).Where("country_code = ?", candidate.CountryCode).First(&swift).Error; !errors.Is(err, gorm.ErrRecordNotFound) {
 		if err != nil {
 			return err
 		}
@@ -89,7 +90,7 @@ func validateSwiftData(candidate *models.SwiftModel, tableName string) error {
 		}
 	}
 
-	if err := database.DB.Table(tableName).Where("country_name = ?", candidate.CountryName).First(&swift).Error; !errors.Is(err, gorm.ErrRecordNotFound) {
+	if err := database.DB.Table(database.DEFAULT_TABLE_NAME).Where("country_name = ?", candidate.CountryName).First(&swift).Error; !errors.Is(err, gorm.ErrRecordNotFound) {
 		if err != nil {
 			return err
 		}

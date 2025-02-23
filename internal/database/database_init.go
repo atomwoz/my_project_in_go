@@ -2,6 +2,8 @@ package database
 
 import (
 	"fmt"
+	"io"
+	"os"
 
 	"atomwoz.com/remitly_task/internal/config"
 	"atomwoz.com/remitly_task/internal/logs"
@@ -58,7 +60,23 @@ func SetupDatabase() {
 func SetupTestDatabase() {
 	config.LoadConfig()
 	// Specify the SQLite file path.
+	sourceDbPath := config.GetTestDB()
 	dbPath := "../../tests/test.db"
+	source, err := os.Open(sourceDbPath)
+	if err != nil {
+		logs.Fatal("Failed to open source SQLite DB: %v", err)
+	}
+	defer source.Close()
+
+	dest, err := os.Create(dbPath)
+	if err != nil {
+		logs.Fatal("Failed to create destination SQLite DB: %v", err)
+	}
+	defer dest.Close()
+
+	if _, err = io.Copy(dest, source); err != nil {
+		logs.Fatal("Failed to copy SQLite DB: %v", err)
+	}
 	setupSQLite(dbPath)
 	DB.AutoMigrate(&models.SwiftModel{})
 }

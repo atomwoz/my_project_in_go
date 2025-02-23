@@ -188,6 +188,26 @@ func TestPostNewCountry(t *testing.T) {
 	assert.Equal(t, err, nil, "Error deleting record")
 }
 
+// TestPostTooShortSwiftCode tests the case when the swift code is too short
+func TestPostTooShortSwiftCode(t *testing.T) {
+	testResponse(t, gin.H{
+		"swiftCode":     "PL",
+		"countryISO2":   "PL",
+		"countryName":   "POLAND",
+		"address":       "KRAKÓW, MAŁOPOLSKIE",
+		"bankName":      "FICTIONAL BANK",
+		"isHeadquarter": false,
+	}, http.StatusBadRequest, gin.H{"message": "invalid swift code"})
+	testResponse(t, gin.H{
+		"swiftCode":     "XABPL",
+		"countryISO2":   "PL",
+		"countryName":   "POLAND",
+		"address":       "KRAKÓW, MAŁOPOLSKIE",
+		"bankName":      "FICTIONAL BANK",
+		"isHeadquarter": false,
+	}, http.StatusBadRequest, gin.H{"message": "invalid swift code"})
+}
+
 // TestPostInvalidCountryCode tests the case when the country code is too short or too long
 func TestPostInvalidCountryCode(t *testing.T) {
 	testResponse(t, gin.H{
