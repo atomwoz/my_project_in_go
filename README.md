@@ -44,6 +44,7 @@ docker compose run csv_import
 
 ### 4. Run the application
 
+NOTE: You should change `DEBUG_MODE` to `false` in the `.env` file for production.
 It will listen at [http://localhost:8080](http://localhost:8080)
 
 ```shell
@@ -56,8 +57,13 @@ To run tests, you need to have Go installed.
 This project was tested with Go version 1.24.  
 You can find the installation instructions [here](https://golang.org/doc/install)
 
-To run integration tests:  
-NOTE: Connection to the production database is required to run integration tests.
+To test the connection to production DB, you can use the following command:
+
+```shell
+docker compose run db_check
+```
+
+To run integration tests:
 
 ```shell
 go test ./tests/...
@@ -67,12 +73,6 @@ To run unit tests:
 
 ```shell
 go test ./internal/...
-```
-
-To test the connection, you can use the following command:
-
-```shell
-docker compose run db_check
 ```
 
 To run all tests:
